@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center">
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <CheckBox
+            android:id="@+id/checkboxPhysical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Physical Challenges" />
+
+        <CheckBox
+            android:id="@+id/checkboxMental"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mental Challenges" />
+
+        <CheckBox
+            android:id="@+id/checkboxCreative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Creative Challenges" />
+
+        <CheckBox
+            android:id="@+id/checkboxSocial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Social Challenges" />
+
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save Preferences" />
+    </LinearLayout>
+
+</FrameLayout>

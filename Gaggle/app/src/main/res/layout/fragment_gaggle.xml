@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gaggleContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- RecyclerView for Gaggles -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/gaggleRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- Empty state view -->
+    <LinearLayout
+        android:id="@+id/emptyStateContainer"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set your preferences to see available gaggles!"
+            android:textSize="16sp"
+            android:paddingBottom="8dp" />
+
+        <Button
+            android:id="@+id/goToProfileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Preferences" />
+    </LinearLayout>
+</FrameLayout>

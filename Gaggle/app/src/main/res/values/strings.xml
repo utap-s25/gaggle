@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Gaggle</string>
+
+    <!-- Challenge Length Options -->
+    <array name="challenge_length_options">
+        <item>7</item>
+        <item>14</item>
+        <item>30</item>
+    </array>
 </resources>

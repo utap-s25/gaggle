@@ -1,3 +1,4 @@
+
 package edu.utap.gaggle.ui
 
 import android.os.Bundle
@@ -8,6 +9,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModel
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,12 +17,14 @@ import edu.utap.gaggle.R
 import edu.utap.gaggle.adapter.GaggleAdapter
 import edu.utap.gaggle.databinding.FragmentGaggleBinding
 import edu.utap.gaggle.model.Gaggle
+import edu.utap.gaggle.model.GaggleViewModel
 import edu.utap.gaggle.viewmodel.UserViewModel
 
 class GaggleFragment : Fragment() {
     private var _binding: FragmentGaggleBinding? = null
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by activityViewModels()
+    private val gaggleViewModel: GaggleViewModel by activityViewModels()
     private lateinit var adapter: GaggleAdapter
     private val db = FirebaseFirestore.getInstance()
 
@@ -30,9 +34,17 @@ class GaggleFragment : Fragment() {
     ): View {
         _binding = FragmentGaggleBinding.inflate(inflater, container, false)
 
-        adapter = GaggleAdapter(emptyList())
+        adapter = GaggleAdapter(gaggleViewModel)
         binding.gaggleRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.gaggleRecyclerView.adapter = adapter
+
+//        gaggleViewModel.gaggles.observe(viewLifecycleOwner) { gaggleList ->
+//            adapter.updateGaggles(gaggleList)
+//        }
+
+        gaggleViewModel.userGaggles.observe(viewLifecycleOwner) { joined ->
+            adapter.updateJoinedGaggles(joined)
+        }
 
         binding.goToProfileButton.setOnClickListener {
             findNavController().navigate(R.id.profileFragment)

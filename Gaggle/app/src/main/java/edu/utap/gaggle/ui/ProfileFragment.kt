@@ -24,6 +24,20 @@ class ProfileFragment : Fragment() {
     ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
 
+        // Load preferences from ViewModel (Firestore)
+        viewModel.loadPreferences()
+
+        // Observe changes to userPreferences LiveData and update UI accordingly
+        viewModel.preferences.observe(viewLifecycleOwner) { prefs ->
+            prefs?.let {
+                binding.checkboxPhysical.isChecked = it.wantsPhysical
+                binding.checkboxMental.isChecked = it.wantsMental
+                binding.checkboxCreative.isChecked = it.wantsCreative
+                binding.checkboxSocial.isChecked = it.wantsSocial
+            }
+        }
+
+        // Save preferences when user clicks save button
         binding.saveButton.setOnClickListener {
             val prefs = UserPreferences(
                 wantsPhysical = binding.checkboxPhysical.isChecked,

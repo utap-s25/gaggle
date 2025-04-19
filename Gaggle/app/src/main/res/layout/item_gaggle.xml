@@ -1,30 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/gaggleCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    android:elevation="4dp"
-    android:padding="12dp"
-    android:radius="8dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/gaggleTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Gaggle Title"
-            android:textAppearance="?attr/textAppearanceHeadline6" />
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/gaggleDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gaggle Description"
+            android:textAppearance="?attr/textAppearanceBody1"
+            android:paddingTop="4dp"
+            android:paddingBottom="12dp" />
+
+        <Button
+            android:id="@+id/joinLeaveButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Gaggle description here"
-            android:textAppearance="?attr/textAppearanceBody2"
-            android:paddingTop="4dp" />
+            android:text="Join" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

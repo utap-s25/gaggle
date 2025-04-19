@@ -1,46 +1,122 @@
+
 package edu.utap.gaggle.model
 
+import android.R.bool
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
-import com.google.firebase.Firebase
-
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import edu.utap.gaggle.model.Gaggle
 
 class GaggleViewModel : ViewModel() {
     private val db = Firebase.firestore
-    private val _gaggles = MutableLiveData<List<Gaggle>>()
-    val gaggles: LiveData<List<Gaggle>> get() = _gaggles
+    private val auth = Firebase.auth
+
+    // preferences used to filter gaggles
+    private val _preferences = MutableLiveData<List<String>>()
+    val preferences: LiveData<List<String>> get() = _preferences
+
+    // gaggles the user has already joined
+    private val _userGaggles = MutableLiveData<Set<String>>()
+    val userGaggles: LiveData<Set<String>> get() = _userGaggles
+
+    // raw gaggles from Firestore
+    private val _allMatchingGaggles = MutableLiveData<List<Gaggle>>()
+
+    // auto-updated gaggle list
+    val gaggles = MediatorLiveData<List<Gaggle>>()
 
     private var listenerRegistration: ListenerRegistration? = null
 
-    fun listenToGaggles(preferences: List<String>) {
-        listenerRegistration?.remove()
+    init {
+        gaggles.addSource(_preferences) { prefs ->
+            listenToGaggles(prefs)
+        }
 
-        listenerRegistration = db.collection("gaggles")
-            .whereArrayContainsAny("preferences", preferences)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null || snapshot == null) return@addSnapshotListener
-                val gaggleList = snapshot.documents.mapNotNull { it.toObject(Gaggle::class.java)?.copy(id = it.id) }
-                _gaggles.value = gaggleList
+        gaggles.addSource(_allMatchingGaggles) { updateFilteredList() }
+        gaggles.addSource(_userGaggles) { updateFilteredList() }
+
+        fetchUserGaggles()
+    }
+
+
+    private fun updateFilteredList() {
+        val joined = _userGaggles.value ?: emptySet()
+        val all = _allMatchingGaggles.value ?: emptyList()
+        gaggles.value = all.sortedByDescending { joined.contains(it.id) }
+    }
+
+    fun setPreferences(newPrefs: List<String>) {
+        _preferences.value = newPrefs
+    }
+
+    private fun fetchUserGaggles() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    val gaggleIds = snapshot.get("joinedGaggles") as? List<String> ?: listOf()
+                    _userGaggles.value = gaggleIds.toSet()
+                }
             }
     }
 
-    fun createGaggle(title: String, desc: String, prefs: List<String>, userId: String) {
+    private fun listenToGaggles(preferences: List<String>) {
+        listenerRegistration?.remove()
+
+        if (preferences.isEmpty()) {
+            _allMatchingGaggles.value = emptyList()
+            return
+        }
+
+        listenerRegistration = db.collection("gaggles")
+            .whereArrayContainsAny("categories", preferences)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+                val gaggleList = snapshot.documents.mapNotNull { it.toObject(Gaggle::class.java)?.copy(id = it.id) }
+                _allMatchingGaggles.value = gaggleList
+            }
+    }
+
+    fun joinGaggle(gaggleId: String): Boolean {
+        val uid = auth.currentUser?.uid ?: return false
+        _userGaggles.value = _userGaggles.value?.plus(gaggleId) ?: setOf(gaggleId)
+
+        db.collection("gaggles").document(gaggleId)
+            .update("members", FieldValue.arrayUnion(uid))
+        db.collection("users").document(uid)
+            .update("joinedGaggles", FieldValue.arrayUnion(gaggleId))
+        return true
+    }
+
+    fun leaveGaggle(gaggleId: String): Boolean {
+        val uid = auth.currentUser?.uid ?: return false
+        _userGaggles.value = _userGaggles.value?.minus(gaggleId) ?: setOf(gaggleId)
+
+        db.collection("gaggles").document(gaggleId)
+            .update("members", FieldValue.arrayRemove(uid))
+        db.collection("users").document(uid)
+            .update("joinedGaggles", FieldValue.arrayRemove(gaggleId))
+        return true
+    }
+
+    fun createGaggle(title: String, desc: String, prefs: List<String>) {
+        val userId = auth.currentUser?.uid ?: return
         val gaggle = Gaggle(
             title = title,
             description = desc,
             categories = prefs,
             members = listOf(userId)
         )
-        db.collection("gaggles").add(gaggle)
-    }
-
-    fun joinGaggle(gaggleId: String, userId: String) {
-        db.collection("gaggles").document(gaggleId)
-            .update("members", FieldValue.arrayUnion(userId))
+        db.collection("gaggles").add(gaggle).addOnSuccessListener { doc ->
+            db.collection("users").document(userId)
+                .update("joinedGaggles", FieldValue.arrayUnion(doc.id))
+        }
     }
 
     override fun onCleared() {
@@ -48,3 +124,4 @@ class GaggleViewModel : ViewModel() {
         listenerRegistration?.remove()
     }
 }
+

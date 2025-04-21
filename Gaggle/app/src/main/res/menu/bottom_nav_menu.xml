@@ -9,7 +9,7 @@
         android:icon="@android:drawable/ic_menu_view"
         android:title="Feed" />
     <item
-        android:id="@+id/recordFragment"
+        android:id="@+id/gaggleFragment"
         android:icon="@drawable/gaggle_logo"
         android:title="Gaggle" />
     <item

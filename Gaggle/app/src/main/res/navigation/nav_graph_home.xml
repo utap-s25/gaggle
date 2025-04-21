@@ -15,9 +15,18 @@
         android:label="Feed" />
 
     <fragment
-        android:id="@+id/recordFragment"
+        android:id="@+id/gaggleFragment"
         android:name="edu.utap.gaggle.ui.GaggleFragment"
-        android:label="Record" />
+        android:label="Gaggles">
+        <action
+            android:id="@+id/action_gaggleFragment_to_createGaggleFragment"
+            app:destination="@id/createGaggleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createGaggleFragment"
+        android:name="edu.utap.gaggle.ui.CreateGaggleFragment"
+        android:label="Create Gaggle" />
 
     <fragment
         android:id="@+id/profileFragment"

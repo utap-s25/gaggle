@@ -105,13 +105,14 @@ class GaggleViewModel : ViewModel() {
         return true
     }
 
-    fun createGaggle(title: String, desc: String, prefs: List<String>) {
+    fun createGaggle(title: String, desc: String, prefs: List<String>, tasks: List<String>) {
         val userId = auth.currentUser?.uid ?: return
         val gaggle = Gaggle(
             title = title,
             description = desc,
             categories = prefs,
-            members = listOf(userId)
+            members = listOf(userId),
+            tasks = tasks
         )
         db.collection("gaggles").add(gaggle).addOnSuccessListener { doc ->
             db.collection("users").document(userId)

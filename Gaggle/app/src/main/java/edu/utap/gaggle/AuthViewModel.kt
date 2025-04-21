@@ -3,18 +3,27 @@ package edu.utap.gaggle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 
 class AuthViewModel : ViewModel() {
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     private val _loginSuccess = MutableLiveData<Boolean>()
     val loginSuccess: LiveData<Boolean> = _loginSuccess
 
     fun login(email: String, password: String) {
-        // TODO: Replace this with real Firebase logic
-        viewModelScope.launch {
-            _loginSuccess.value = email == "test@example.com" && password == "password123"
-        }
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                _loginSuccess.value = task.isSuccessful
+            }
+    }
+
+    fun logout() {
+        auth.signOut()
+        _loginSuccess.value = false
+    }
+
+    fun isLoggedIn(): Boolean {
+        return auth.currentUser != null
     }
 }

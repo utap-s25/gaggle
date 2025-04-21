@@ -10,6 +10,7 @@
         android:id="@+id/gaggleRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingBottom="80dp"
         android:visibility="gone" />
 
     <!-- Empty state view -->
@@ -34,4 +35,15 @@
             android:layout_height="wrap_content"
             android:text="Set Preferences" />
     </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabCreateGaggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="100dp"
+        android:layout_marginEnd="16dp"
+        android:visibility="gone"
+        android:src="@drawable/gaggle_logo"
+        android:contentDescription="Create Gaggle" />
 </FrameLayout>

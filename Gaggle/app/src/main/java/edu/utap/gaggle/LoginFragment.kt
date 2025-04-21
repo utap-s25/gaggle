@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import edu.utap.gaggle.R
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -37,7 +36,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
         authViewModel.loginSuccess.observe(viewLifecycleOwner) { success ->
             if (success) {
-                findNavController().navigate(R.id.action_login_to_main)
+                findNavController().navigate(R.id.action_login_to_home)
             } else {
                 Toast.makeText(requireContext(), "Login failed", Toast.LENGTH_SHORT).show()
             }

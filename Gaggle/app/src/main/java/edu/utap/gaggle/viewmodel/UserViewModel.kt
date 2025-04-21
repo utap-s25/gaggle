@@ -39,6 +39,7 @@ class UserViewModel : ViewModel() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid)
             .set(mapOf(
+                "username" to prefs.username,
                 "wantsPhysical" to prefs.wantsPhysical,
                 "wantsMental" to prefs.wantsMental,
                 "wantsCreative" to prefs.wantsCreative,

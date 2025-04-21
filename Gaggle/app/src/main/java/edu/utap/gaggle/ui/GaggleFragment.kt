@@ -50,6 +50,11 @@ class GaggleFragment : Fragment() {
             findNavController().navigate(R.id.profileFragment)
         }
 
+        binding.fabCreateGaggle.setOnClickListener {
+            val parentNavController = parentFragment?.findNavController()
+            parentNavController?.navigate(R.id.action_gaggleFragment_to_createGaggleFragment)
+        }
+
         viewModel.preferences.observe(viewLifecycleOwner) { prefs ->
             Log.d("GAGGLEW", "Preferences observed: $prefs")
 
@@ -73,15 +78,21 @@ class GaggleFragment : Fragment() {
     }
 
     private fun showEmptyState() {
-        binding.emptyStateContainer.isVisible = true
-        binding.gaggleRecyclerView.isVisible = false
+        _binding?.let { binding ->
+            binding.emptyStateContainer.isVisible = true
+            binding.gaggleRecyclerView.isVisible = false
+            binding.fabCreateGaggle.isVisible = false
+        }
     }
 
     private fun showGaggles(gaggles: List<Gaggle>) {
-        binding.emptyStateContainer.isVisible = false
-        binding.gaggleRecyclerView.isVisible = true
-        Log.d("GAGGLE", "hey we made it this far")
-        adapter.updateGaggles(gaggles)
+        _binding?.let { binding ->
+            binding.emptyStateContainer.isVisible = false
+            binding.gaggleRecyclerView.isVisible = true
+            binding.fabCreateGaggle.isVisible = true
+            Log.d("GAGGLE", "hey we made it this far")
+            adapter.updateGaggles(gaggles)
+        }
     }
 
     private fun fetchGagglesMatching(categories: List<String>) {
@@ -91,8 +102,9 @@ class GaggleFragment : Fragment() {
             .get()
             .addOnSuccessListener { result ->
                 val gaggleList = result.mapNotNull { it.toObject(Gaggle::class.java) }
-                Log.d("GAGGLEW", "Fetched gaggles: $gaggleList")
-                showGaggles(gaggleList)
+                if (view != null && isAdded) {
+                    showGaggles(gaggleList)
+                }
             }
             .addOnFailureListener { e ->
                 Log.e("GAGGLEW", "Firestore fetch failed", e)
@@ -102,6 +114,7 @@ class GaggleFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d("GAGGLE", "onDestroyView called, nulling _binding")
         _binding = null
     }
 }

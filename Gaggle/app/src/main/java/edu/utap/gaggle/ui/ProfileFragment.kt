@@ -1,5 +1,6 @@
 package edu.utap.gaggle.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,8 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.navigation.fragment.R
+import edu.utap.gaggle.R
 import androidx.navigation.fragment.findNavController
+import com.google.firebase.auth.FirebaseAuth
+import edu.utap.gaggle.LoginFragment
+import edu.utap.gaggle.MainActivity
 import edu.utap.gaggle.databinding.FragmentProfileBinding
 import edu.utap.gaggle.model.UserPreferences
 import edu.utap.gaggle.viewmodel.UserViewModel
@@ -24,22 +28,24 @@ class ProfileFragment : Fragment() {
     ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
 
-        // Load preferences from ViewModel (Firestore)
         viewModel.loadPreferences()
 
-        // Observe changes to userPreferences LiveData and update UI accordingly
         viewModel.preferences.observe(viewLifecycleOwner) { prefs ->
             prefs?.let {
                 binding.checkboxPhysical.isChecked = it.wantsPhysical
                 binding.checkboxMental.isChecked = it.wantsMental
                 binding.checkboxCreative.isChecked = it.wantsCreative
                 binding.checkboxSocial.isChecked = it.wantsSocial
+
+                val defaultName = FirebaseAuth.getInstance().currentUser?.email ?: ""
+                binding.editUsername.setText(if (it.username.isBlank()) defaultName else it.username)
             }
         }
 
-        // Save preferences when user clicks save button
+
         binding.saveButton.setOnClickListener {
             val prefs = UserPreferences(
+                username = binding.editUsername.text.toString(),
                 wantsPhysical = binding.checkboxPhysical.isChecked,
                 wantsMental = binding.checkboxMental.isChecked,
                 wantsCreative = binding.checkboxCreative.isChecked,
@@ -47,6 +53,14 @@ class ProfileFragment : Fragment() {
             )
             Log.d("PROFILE", "Saving prefs and navigating to Gaggle: $prefs")
             viewModel.updatePreferences(prefs)
+        }
+
+
+        binding.logoutButton.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
         }
 
         return binding.root

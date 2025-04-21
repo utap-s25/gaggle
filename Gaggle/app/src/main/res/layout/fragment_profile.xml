@@ -11,6 +11,14 @@
         android:layout_height="match_parent"
         android:padding="16dp">
 
+        <EditText
+            android:id="@+id/editUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Username"
+            android:inputType="textPersonName"
+            android:layout_marginTop="16dp" />
+
         <CheckBox
             android:id="@+id/checkboxPhysical"
             android:layout_width="wrap_content"
@@ -40,6 +48,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Save Preferences" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="400dp" />
+
+        <Button
+            android:id="@+id/logoutButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Log Out"/>
     </LinearLayout>
 
 </FrameLayout>

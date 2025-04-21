@@ -22,10 +22,6 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         FirebaseApp.initializeApp(this)
 
-        // TEST CREDENTIALS
-        // fake@email.com
-        // 123456
-
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
 

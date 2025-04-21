@@ -5,5 +5,6 @@ data class Gaggle(
     val title: String = "",
     val description: String = "",
     val categories: List<String> = listOf(),
-    val members: List<String> = listOf()
+    val members: List<String> = listOf(),
+    var tasks: List<String> = listOf() // List of task descriptions
 )

@@ -17,7 +17,7 @@ import edu.utap.gaggle.R
 import edu.utap.gaggle.adapter.GaggleAdapter
 import edu.utap.gaggle.databinding.FragmentGaggleBinding
 import edu.utap.gaggle.model.Gaggle
-import edu.utap.gaggle.model.GaggleViewModel
+import edu.utap.gaggle.viewmodel.GaggleViewModel
 import edu.utap.gaggle.viewmodel.UserViewModel
 
 class GaggleFragment : Fragment() {

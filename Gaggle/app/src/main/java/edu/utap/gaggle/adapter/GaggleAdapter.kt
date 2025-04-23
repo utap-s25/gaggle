@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import edu.utap.gaggle.databinding.ItemGaggleBinding
 import edu.utap.gaggle.model.Gaggle
-import edu.utap.gaggle.model.GaggleViewModel
+import edu.utap.gaggle.viewmodel.GaggleViewModel
 
 class GaggleAdapter(private val viewModel: GaggleViewModel) :
     RecyclerView.Adapter<GaggleAdapter.GaggleViewHolder>() {

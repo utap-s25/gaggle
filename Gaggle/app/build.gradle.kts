@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.konfetti.xml)
 //    implementation(libs.androidx.navigation.safeargs)
 
 }

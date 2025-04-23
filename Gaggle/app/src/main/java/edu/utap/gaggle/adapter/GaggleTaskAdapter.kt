@@ -1,22 +1,19 @@
 package edu.utap.gaggle.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import edu.utap.gaggle.R
-import edu.utap.gaggle.model.GaggleTask
+import edu.utap.gaggle.model.Task
 import java.time.LocalDate
 
 class GaggleTaskAdapter(
-    private var tasks: List<GaggleTask>,
+    private var tasks: List<Task>,
     private val gaggleId: String,
-    private val onTaskChecked: (GaggleTask, Boolean) -> Unit
+    private val onTaskChecked: (Task, Boolean) -> Unit
 ) : RecyclerView.Adapter<GaggleTaskAdapter.TaskViewHolder>() {
 
     inner class TaskViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -44,7 +41,7 @@ class GaggleTaskAdapter(
 
     override fun getItemCount(): Int = tasks.size
 
-    fun updateTasks(newTasks: List<GaggleTask>) {
+    fun updateTasks(newTasks: List<Task>) {
         tasks = newTasks
         notifyDataSetChanged()
     }

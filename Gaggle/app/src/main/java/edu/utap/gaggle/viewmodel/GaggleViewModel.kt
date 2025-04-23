@@ -1,7 +1,5 @@
+package edu.utap.gaggle.viewmodel
 
-package edu.utap.gaggle.model
-
-import android.R.bool
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -134,4 +132,3 @@ class GaggleViewModel : ViewModel() {
         listenerRegistration?.remove()
     }
 }
-

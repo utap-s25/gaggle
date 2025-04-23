@@ -1,4 +1,4 @@
-package edu.utap.gaggle
+package edu.utap.gaggle.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

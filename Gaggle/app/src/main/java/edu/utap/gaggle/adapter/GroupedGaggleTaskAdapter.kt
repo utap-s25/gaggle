@@ -7,11 +7,11 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import edu.utap.gaggle.R
-import edu.utap.gaggle.model.GaggleTask
+import edu.utap.gaggle.model.Task
 
 class GroupedGaggleTaskAdapter(
-    private var groupedTasks: Map<String, List<GaggleTask>>,
-    private val onCheckChanged: (GaggleTask, Boolean) -> Unit
+    private var groupedTasks: Map<String, List<Task>>,
+    private val onCheckChanged: (Task, Boolean) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val itemList = mutableListOf<Any>() // Mix of String (header) and GaggleTask
@@ -25,7 +25,7 @@ class GroupedGaggleTaskAdapter(
         rebuildItemList()
     }
 
-    fun updateTasks(newGroupedTasks: Map<String, List<GaggleTask>>) {
+    fun updateTasks(newGroupedTasks: Map<String, List<Task>>) {
         groupedTasks = newGroupedTasks
         rebuildItemList()
         notifyDataSetChanged()
@@ -59,7 +59,7 @@ class GroupedGaggleTaskAdapter(
         if (holder is HeaderViewHolder) {
             holder.bind(itemList[position] as String)
         } else if (holder is TaskViewHolder) {
-            holder.bind(itemList[position] as GaggleTask)
+            holder.bind(itemList[position] as Task)
         }
     }
 
@@ -76,7 +76,7 @@ class GroupedGaggleTaskAdapter(
         private val titleView: TextView = view.findViewById(R.id.taskTitle)
         private val checkBox: CheckBox = view.findViewById(R.id.taskCheckbox)
 
-        fun bind(task: GaggleTask) {
+        fun bind(task: Task) {
             titleView.text = task.title
             checkBox.isChecked = task.completed
             checkBox.setOnCheckedChangeListener(null)

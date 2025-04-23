@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import edu.utap.gaggle.databinding.FragmentCreateGaggleBinding
-import edu.utap.gaggle.model.GaggleViewModel
+import edu.utap.gaggle.viewmodel.GaggleViewModel
 
 class CreateGaggleFragment : Fragment() {
 

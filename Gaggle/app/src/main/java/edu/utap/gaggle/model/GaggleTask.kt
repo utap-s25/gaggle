@@ -3,7 +3,8 @@ package edu.utap.gaggle.model
 import java.time.LocalDate
 
 data class GaggleTask(
-    val title: String = "",
-    val date: LocalDate = LocalDate.now(),
-    var completed: Boolean = false
+    var title: String,
+    var date: LocalDate,
+    var completed: Boolean = false,
+    var gaggleTitle: String = "" // for grouping in ProgressFragment
 )

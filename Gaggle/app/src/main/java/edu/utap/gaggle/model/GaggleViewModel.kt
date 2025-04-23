@@ -2,6 +2,7 @@
 package edu.utap.gaggle.model
 
 import android.R.bool
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -86,6 +87,10 @@ class GaggleViewModel : ViewModel() {
     fun joinGaggle(gaggleId: String): Boolean {
         val uid = auth.currentUser?.uid ?: return false
         _userGaggles.value = _userGaggles.value?.plus(gaggleId) ?: setOf(gaggleId)
+        if (gaggleId.isBlank()) {
+            Log.e("joinGaggle", "Invalid gaggleId: '$gaggleId'")
+            return false
+        }
 
         db.collection("gaggles").document(gaggleId)
             .update("members", FieldValue.arrayUnion(uid))
@@ -107,16 +112,20 @@ class GaggleViewModel : ViewModel() {
 
     fun createGaggle(title: String, desc: String, prefs: List<String>, tasks: List<String>) {
         val userId = auth.currentUser?.uid ?: return
+        val gaggleRef = db.collection("gaggles").document()  // generate a doc ref
+
         val gaggle = Gaggle(
+            id = gaggleRef.id,
             title = title,
             description = desc,
             categories = prefs,
             members = listOf(userId),
             tasks = tasks
         )
-        db.collection("gaggles").add(gaggle).addOnSuccessListener { doc ->
+
+        gaggleRef.set(gaggle).addOnSuccessListener {
             db.collection("users").document(userId)
-                .update("joinedGaggles", FieldValue.arrayUnion(doc.id))
+                .update("joinedGaggles", FieldValue.arrayUnion(gaggleRef.id))
         }
     }
 

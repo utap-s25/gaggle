@@ -1,36 +1,33 @@
 package edu.utap.gaggle.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import edu.utap.gaggle.R
-import edu.utap.gaggle.adapter.GaggleTaskAdapter
+import edu.utap.gaggle.model.GaggleViewModel
+import edu.utap.gaggle.adapter.GroupedGaggleTaskAdapter
 import edu.utap.gaggle.model.GaggleTask
 import java.time.LocalDate
 
 class ProgressFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: GaggleTaskAdapter
-    private lateinit var emptyView: TextView
-    private lateinit var completeAllButton: Button
+    private lateinit var adapter: GroupedGaggleTaskAdapter
+    private val viewModel: GaggleViewModel by activityViewModels()
 
-    private var tasks: MutableList<GaggleTask> = mutableListOf()
     private val firestore = FirebaseFirestore.getInstance()
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-    // These should be passed to the fragment, set via arguments or ViewModel
-    private val gaggleId: String = "OiweflJ5yff7gzX0Em7e" // TODO: Replace with real gaggleId
-    private val userId: String? get() = FirebaseAuth.getInstance().currentUser?.uid
+    private val groupedTasks: MutableMap<String, MutableList<GaggleTask>> = mutableMapOf()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,11 +37,10 @@ class ProgressFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        recyclerView = view.findViewById(R.id.progressRecyclerView)
-        emptyView = view.findViewById(R.id.noTasksMessage)
-        completeAllButton = view.findViewById(R.id.btnCompleteAll)
+        super.onViewCreated(view, savedInstanceState)
 
-        adapter = GaggleTaskAdapter(tasks) { task, isChecked ->
+        recyclerView = view.findViewById(R.id.progressRecyclerView)
+        adapter = GroupedGaggleTaskAdapter(groupedTasks) { task, isChecked ->
             task.completed = isChecked
             markTaskComplete(task)
             checkEmptyState()
@@ -53,55 +49,33 @@ class ProgressFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        completeAllButton.setOnClickListener {
-            tasks.forEach { task ->
-                task.completed = true
-                markTaskComplete(task)
+        viewModel.userGaggles.observe(viewLifecycleOwner, Observer { gaggles ->
+            groupedTasks.clear()
+            gaggles.forEach { gaggleId ->
+                loadTasksForGaggle(gaggleId)
             }
-            adapter.updateTasks(tasks)
-        }
-
-        loadTasks()
+        })
     }
 
-    private fun markTaskComplete(task: GaggleTask) {
-        val today = LocalDate.now().toString()
-        val uid = userId ?: return
-        val taskId = task.title ?: return // Assuming each GaggleTask has a unique ID
-
-        val taskRef = firestore.collection("gaggles")
-            .document(gaggleId)
-            .collection("tasks")
-            .document(taskId)
-            .collection("completions")
-            .document(uid)
-
-        taskRef.set(mapOf("datesCompleted.$today" to true), SetOptions.merge())
-    }
-
-    private fun loadTasks() {
-        if (gaggleId.isBlank() || userId == null) return
-
-        val today = LocalDate.now()
-
+    private fun loadTasksForGaggle(gaggleId: String) {
         firestore.collection("gaggles")
             .document(gaggleId)
             .get()
             .addOnSuccessListener { document ->
                 val taskTitles = document.get("tasks") as? List<String> ?: emptyList()
+                val gaggleTitle = document.getString("title") ?: "Unnamed Gaggle"
+                val today = LocalDate.now()
                 val newTasks = mutableListOf<GaggleTask>()
-
                 var remaining = taskTitles.size
+
                 if (remaining == 0) {
-                    adapter.updateTasks(newTasks)
+                    groupedTasks[gaggleTitle] = newTasks
+                    adapter.updateTasks(groupedTasks)
                     checkEmptyState()
                     return@addOnSuccessListener
                 }
 
                 for (taskTitle in taskTitles) {
-                    Log.d("Jisoo", "taskTitle: $taskTitle")
-                    Log.d("Jisoo", "userId: $userId")
-                    Log.d("Jisoo", "today: $today")
                     val completionRef = firestore.collection("gaggles")
                         .document(gaggleId)
                         .collection("tasks")
@@ -111,82 +85,55 @@ class ProgressFragment : Fragment() {
 
                     completionRef.get()
                         .addOnSuccessListener { completionDoc ->
-                            Log.d("Jisoo", "completionRef succeeded")
-                            val completed =
-                                completionDoc.getBoolean("datesCompleted.$today") == true
+                            val completed = completionDoc.getBoolean("datesCompleted.$today") == true
                             val task = GaggleTask(
                                 title = taskTitle,
                                 date = today,
-                                completed = completed
+                                completed = completed,
+                                gaggleTitle = gaggleTitle
                             )
                             newTasks.add(task)
 
                             remaining--
                             if (remaining == 0) {
-                                adapter.updateTasks(newTasks)
+                                groupedTasks[gaggleTitle] = newTasks
+                                adapter.updateTasks(groupedTasks)
                                 checkEmptyState()
                             }
                         }
-                        .addOnFailureListener { e ->
-                            Log.e("gaggle", "Error loading completion for $taskTitle", e)
+                        .addOnFailureListener {
                             remaining--
                             if (remaining == 0) {
-                                adapter.updateTasks(newTasks)
+                                groupedTasks[gaggleTitle] = newTasks
+                                adapter.updateTasks(groupedTasks)
                                 checkEmptyState()
                             }
                         }
-
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.e("gaggle", "Failed to load gaggle", e)
             }
     }
 
-    private fun fetchCompletionStatus(taskList: MutableList<GaggleTask>) {
-        val uid = userId ?: return
-        val today = LocalDate.now().toString()
-
-        val updatedTasks = mutableListOf<GaggleTask>()
-        var completedCount = 0
-        val total = taskList.size
-
-        taskList.forEach { task ->
-            val taskRef = firestore.collection("gaggles")
+    private fun markTaskComplete(task: GaggleTask) {
+        val gaggleId = viewModel.gaggles.value?.firstOrNull { it.title == task.gaggleTitle }?.id
+        if (gaggleId != null) {
+            val completionRef = firestore.collection("gaggles")
                 .document(gaggleId)
                 .collection("tasks")
-                .document(task.title) // assuming title is unique
+                .document(task.title)
+                .collection("completions")
+                .document(userId!!)
 
-            taskRef.collection("completions")
-                .document(uid)
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    val isCompletedToday = snapshot.getBoolean("datesCompleted.$today") == true
-                    task.completed = isCompletedToday
-                    updatedTasks.add(task)
-                    completedCount++
-                    if (completedCount == total) {
-                        tasks = updatedTasks
-                        adapter.updateTasks(tasks)
-                        checkEmptyState()
-                    }
-                }
-                .addOnFailureListener {
-                    completedCount++
-                    if (completedCount == total) {
-                        tasks = updatedTasks
-                        adapter.updateTasks(tasks)
-                        checkEmptyState()
-                    }
-                }
+            completionRef.get().addOnSuccessListener { doc ->
+                val updates = doc.get("datesCompleted") as? MutableMap<String, Boolean> ?: mutableMapOf()
+                updates[task.date.toString()] = task.completed
+                completionRef.set(mapOf("datesCompleted" to updates))
+            }
         }
     }
 
-
-
     private fun checkEmptyState() {
-        val hasTasks = tasks.isNotEmpty()
-        emptyView.visibility = if (hasTasks) View.GONE else View.VISIBLE
-        completeAllButton.visibility = if (hasTasks) View.VISIBLE else View.GONE
+        val isEmpty = groupedTasks.values.flatten().isEmpty()
+        view?.findViewById<TextView>(R.id.noTasksMessage)?.visibility =
+            if (isEmpty) View.VISIBLE else View.GONE
     }
 }

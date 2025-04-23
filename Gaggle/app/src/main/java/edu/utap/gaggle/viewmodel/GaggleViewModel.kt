@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -40,7 +41,7 @@ class GaggleViewModel : ViewModel() {
         gaggles.addSource(_allMatchingGaggles) { updateFilteredList() }
         gaggles.addSource(_userGaggles) { updateFilteredList() }
 
-        fetchUserGaggles()
+        startListeningToUserGaggles()
     }
 
 
@@ -54,13 +55,16 @@ class GaggleViewModel : ViewModel() {
         _preferences.value = newPrefs
     }
 
-    private fun fetchUserGaggles() {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("users").document(uid)
+    fun startListeningToUserGaggles() {
+        val userId = auth.currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null && snapshot.exists()) {
-                    val gaggleIds = snapshot.get("joinedGaggles") as? List<String> ?: listOf()
-                    _userGaggles.value = gaggleIds.toSet()
+                    val gaggleIds = snapshot.get("joinedGaggles") as? List<String> ?: emptyList()
+                    _userGaggles.value = gaggleIds.toSet()  // Store it as a Set to avoid duplicates
                 }
             }
     }

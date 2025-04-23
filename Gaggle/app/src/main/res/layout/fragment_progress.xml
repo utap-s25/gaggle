@@ -1,46 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/progressContainer"
-    android:layout_width="match_parent"
+<FrameLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
+        android:id="@+id/taskContainer"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/progressTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Today's Tasks"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:paddingBottom="16dp" />
-
-        <TextView
-            android:id="@+id/noTasksMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="You have no tasks today!"
-            android:layout_gravity="center_horizontal"
-            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/progressRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingBottom="16dp"
-            android:clipToPadding="false" />
+            android:layout_weight="1"/>
 
-        <Button
-            android:id="@+id/btnCompleteAll"
+        <TextView
+            android:id="@+id/noTasksMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Mark All as Done"
+            android:text="No tasks for today!"
+            android:gravity="center"
             android:visibility="gone"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/confettiContainer"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/streakText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You completed all your tasks!"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:padding="24dp"/>
     </LinearLayout>
 </FrameLayout>

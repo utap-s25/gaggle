@@ -1,7 +1,7 @@
 package edu.utap.gaggle.ui
 
-import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,11 +9,12 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import android.content.Context
+import java.time.format.DateTimeFormatter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import edu.utap.gaggle.ConfettiActivity
 import edu.utap.gaggle.R
 import edu.utap.gaggle.viewmodel.GaggleViewModel
 import edu.utap.gaggle.adapter.GroupedGaggleTaskAdapter
@@ -35,6 +36,7 @@ class ProgressFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        checkIfNewDayAndReset()
         return inflater.inflate(R.layout.fragment_progress, container, false)
     }
 
@@ -46,13 +48,14 @@ class ProgressFragment : Fragment() {
             task.completed = isChecked
             task.timestamp = if (isChecked) LocalDate.now().toEpochDay() else 0
             markTaskComplete(task)
-            checkEmptyState()
+            updateUIState()
         }
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
         viewModel.userGaggles.observe(viewLifecycleOwner, Observer { gaggles ->
+            Log.d("ProgressFragment", "User gaggles changed: $gaggles")
             groupedTasks.clear()
             gaggles.forEach { gaggleId ->
                 loadTasksForGaggle(gaggleId)
@@ -60,21 +63,43 @@ class ProgressFragment : Fragment() {
         })
     }
 
+    private fun checkIfNewDayAndReset() {
+        val prefs = requireContext().getSharedPreferences("gaggle_prefs", Context.MODE_PRIVATE)
+        val lastDateString = prefs.getString("last_opened_date", null)
+        val today = LocalDate.now()
+        val formatter = DateTimeFormatter.ISO_DATE
+
+        if (lastDateString == null || LocalDate.parse(lastDateString, formatter) != today) {
+            // It's a new day! Reset the UI
+            resetTaskUI()
+
+            // Save today's date
+            prefs.edit().putString("last_opened_date", today.format(formatter)).apply()
+        }
+    }
+
     private fun loadTasksForGaggle(gaggleId: String) {
+        val confettiContainer = view?.findViewById<View>(R.id.confettiContainer)
+        confettiContainer?.visibility = View.GONE
+        val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
+        recycler?.visibility = View.VISIBLE
+
         firestore.collection("gaggles")
             .document(gaggleId)
             .get()
             .addOnSuccessListener { document ->
                 val taskTitles = document.get("tasks") as? List<String> ?: emptyList()
+                Log.d("ProgressFragment", "Task Titles: $taskTitles")
                 val gaggleTitle = document.getString("title") ?: "Unnamed Gaggle"
                 val today = LocalDate.now()
                 val newTasks = mutableListOf<Task>()
                 var remaining = taskTitles.size
 
                 if (remaining == 0) {
+                    Log.d("ProgressFragment", "No tasks for today")
                     groupedTasks[gaggleTitle] = newTasks
                     adapter.updateTasks(groupedTasks)
-                    checkEmptyState()
+                    updateUIState()
                     return@addOnSuccessListener
                 }
 
@@ -87,8 +112,11 @@ class ProgressFragment : Fragment() {
                         .collection("userTasks")
                         .document(taskDocId)
 
-                    taskRef.get()
-                        .addOnSuccessListener { taskDoc ->
+                    taskRef.addSnapshotListener { taskDoc, _ ->
+                        Log.d("ProgressFragment", "Task document: $taskDoc")
+                        Log.d("ProgressFragment", "taskDoc != null: ${taskDoc != null}")
+                        Log.d("ProgressFragment", "taskDoc.exists(): ${taskDoc?.exists()}")
+                        if (taskDoc != null && taskDoc.exists()) {
                             val completed = taskDoc.getBoolean("completed") == true
                             val timestamp = taskDoc.getLong("timestamp") ?: 0L
 
@@ -100,33 +128,44 @@ class ProgressFragment : Fragment() {
                                 userId = userId!!,
                                 timestamp = timestamp
                             )
-                            newTasks.add(task)
+                            Log.d("ProgressFragment", "Task: $task")
+                            val taskList = groupedTasks.getOrPut(gaggleTitle) { mutableListOf() }
+                            val existingIndex = taskList.indexOfFirst { it.title == task.title }
+                            Log.d("ProgressFragment", "Existing index: $existingIndex")
+                            if (existingIndex >= 0) {
+                                taskList[existingIndex] = task
+                            } else {
+                                taskList.add(task)
+                            }
 
-                            remaining--
-                            if (remaining == 0) {
-                                groupedTasks[gaggleTitle] = newTasks
-                                adapter.updateTasks(groupedTasks)
-                                checkEmptyState()
+                            adapter.updateTasks(groupedTasks)
+                            updateUIState()
 
-                                val allCompleted = newTasks.all { it.completed }
-                                if (allCompleted) {
-                                    handleStreakAndShowConfetti(gaggleId, gaggleTitle)
-                                }
+                            Log.d("ProgressFragment", "Remaining tasks: $remaining")
+
+                            val allCompleted = taskList.all { it.completed }
+                            if (allCompleted) {
+                                Log.d("ProgressFragment", "All tasks completed for today")
+                                handleStreakAndShowConfetti(gaggleId, gaggleTitle)
+                            }
+                        } else {
+                            val newTask = Task(
+                                title = taskTitle,
+                                date = today,
+                                completed = false,
+                                gaggleTitle = gaggleTitle,
+                                userId = userId!!,
+                                timestamp = System.currentTimeMillis()
+                            )
+
+                            taskRef.set(newTask).addOnSuccessListener {
+                                Log.d("ProgressFragment", "Task document created with default values.")
+                            }.addOnFailureListener { exception ->
+                                Log.e("ProgressFragment", "Error creating task document", exception)
                             }
                         }
-                        .addOnFailureListener {
-                            remaining--
-                            if (remaining == 0) {
-                                groupedTasks[gaggleTitle] = newTasks
-                                adapter.updateTasks(groupedTasks)
-                                checkEmptyState()
+                    }
 
-                                val allCompleted = newTasks.all { it.completed }
-                                if (allCompleted) {
-                                    handleStreakAndShowConfetti(gaggleId, gaggleTitle)
-                                }
-                            }
-                        }
                 }
             }
     }
@@ -153,16 +192,7 @@ class ProgressFragment : Fragment() {
                     "streakCount" to newStreak
                 )
             )
-
-            showConfettiScreen(newStreak.toInt(), gaggleTitle)
         }
-    }
-
-    private fun showConfettiScreen(streak: Int, gaggleTitle: String) {
-        val intent = Intent(requireContext(), ConfettiActivity::class.java)
-        intent.putExtra("STREAK_COUNT", streak)
-        intent.putExtra("GAGGLE_TITLE", gaggleTitle)
-        startActivity(intent)
     }
 
     private fun markTaskComplete(task: Task) {
@@ -187,9 +217,42 @@ class ProgressFragment : Fragment() {
         taskRef.set(taskData)
     }
 
-    private fun checkEmptyState() {
-        val isEmpty = groupedTasks.values.flatten().isEmpty()
-        view?.findViewById<TextView>(R.id.noTasksMessage)?.visibility =
-            if (isEmpty) View.VISIBLE else View.GONE
+    private fun updateUIState() {
+        val allTasks = groupedTasks.values.flatten()
+
+        allTasks.forEach { task ->
+            Log.d("ProgressFragment", "Task: ${task.title}, Completed: ${task.completed}")
+        }
+
+        val allCompleted = allTasks.isNotEmpty() && allTasks.all { it.completed }
+        val isEmpty = allTasks.isEmpty()
+
+        val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
+        val message = view?.findViewById<TextView>(R.id.noTasksMessage)
+
+        recycler?.visibility = if (allCompleted || isEmpty) View.GONE else View.VISIBLE
+        message?.visibility = if (isEmpty) View.VISIBLE else View.GONE
+
+        if (allCompleted && !isEmpty) {
+            showConfettiInline()
+        }
+
+        Log.d("ProgressFragment", "All tasks completed for gaggle: $allCompleted")
+    }
+
+    private fun resetTaskUI() {
+        val confettiContainer = view?.findViewById<ViewGroup>(R.id.confettiContainer)
+        confettiContainer?.visibility = View.GONE
+
+        val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
+        recycler?.visibility = View.VISIBLE
+    }
+
+    private fun showConfettiInline() {
+        val confettiContainer = view?.findViewById<ViewGroup>(R.id.confettiContainer)
+        confettiContainer?.visibility = View.VISIBLE
+
+        val streakText = confettiContainer?.findViewById<TextView>(R.id.streakText)
+        streakText?.text = "You completed all your tasks today! 🎉"
     }
 }

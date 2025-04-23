@@ -1,5 +1,6 @@
 package edu.utap.gaggle.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +27,7 @@ class GroupedGaggleTaskAdapter(
     }
 
     fun updateTasks(newGroupedTasks: Map<String, List<Task>>) {
+        Log.d("GroupedGaggleTaskAdapter", "Updating tasks: $newGroupedTasks")
         groupedTasks = newGroupedTasks
         rebuildItemList()
         notifyDataSetChanged()

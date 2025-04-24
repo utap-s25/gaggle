@@ -1,7 +1,5 @@
 package edu.utap.gaggle.model
 
-import java.time.LocalDate
-
 data class FeedItem(
     val userName: String? = null,
     val gaggleTitle: String? = null,

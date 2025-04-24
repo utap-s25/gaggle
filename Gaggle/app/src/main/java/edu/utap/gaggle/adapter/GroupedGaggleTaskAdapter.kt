@@ -1,6 +1,5 @@
 package edu.utap.gaggle.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +14,7 @@ class GroupedGaggleTaskAdapter(
     private val onCheckChanged: (Task, Boolean) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val itemList = mutableListOf<Any>() // Mix of String (header) and GaggleTask
+    private val itemList = mutableListOf<Any>()
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -27,7 +26,6 @@ class GroupedGaggleTaskAdapter(
     }
 
     fun updateTasks(newGroupedTasks: Map<String, List<Task>>) {
-        Log.d("GroupedGaggleTaskAdapter", "Updating tasks: $newGroupedTasks")
         groupedTasks = newGroupedTasks
         rebuildItemList()
         notifyDataSetChanged()
@@ -61,7 +59,8 @@ class GroupedGaggleTaskAdapter(
         if (holder is HeaderViewHolder) {
             holder.bind(itemList[position] as String)
         } else if (holder is TaskViewHolder) {
-            holder.bind(itemList[position] as Task)
+            val task = itemList[position] as Task
+            holder.bind(task)
         }
     }
 
@@ -80,11 +79,12 @@ class GroupedGaggleTaskAdapter(
 
         fun bind(task: Task) {
             titleView.text = task.title
-            checkBox.isChecked = task.completed
-            checkBox.setOnCheckedChangeListener(null)
+            checkBox.setOnCheckedChangeListener(null) // Prevent triggering old listener
+            checkBox.isChecked = task.completed        // Set checkbox state safely
             checkBox.setOnCheckedChangeListener { _, isChecked ->
-                onCheckChanged(task, isChecked)
+                onCheckChanged(task, isChecked)        // Add listener after state set
             }
+
         }
     }
 }

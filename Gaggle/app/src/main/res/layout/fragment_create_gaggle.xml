@@ -1,4 +1,5 @@
-<ScrollView android:layout_width="match_parent"
+<ScrollView
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
     xmlns:android="http://schemas.android.com/apk/res/android">
@@ -9,39 +10,95 @@
         android:paddingTop="30dp"
         android:layout_height="wrap_content">
 
+        <!-- Gaggle Title -->
         <EditText
             android:id="@+id/editTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Gaggle Title" />
+            android:hint="Gaggle Title"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Gaggle Title" />
 
+        <!-- Description -->
         <EditText
             android:id="@+id/editDescription"
             android:hint="Description"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView android:text="Tasks"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
+            android:importantForAccessibility="yes"
+            android:contentDescription="Gaggle Description" />
+
+        <!-- Task Section -->
+        <TextView
+            android:text="Tasks"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Tasks Section"/>
 
         <LinearLayout
             android:id="@+id/taskListContainer"
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
 
+        <!-- Add Task Button -->
         <Button
             android:id="@+id/btnAddTask"
             android:text="Add Task"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Add a new task" />
 
+        <!-- Category Selection Section -->
+        <TextView
+            android:text="Categories"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Categories Section" />
+
+        <CheckBox
+            android:id="@+id/checkboxPhysical"
+            android:text="Physical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Physical category" />
+
+        <CheckBox
+            android:id="@+id/checkboxMental"
+            android:text="Mental"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Mental category" />
+
+        <CheckBox
+            android:id="@+id/checkboxCreative"
+            android:text="Creative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Creative category" />
+
+        <CheckBox
+            android:id="@+id/checkboxSocial"
+            android:text="Social"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Social category" />
+
+        <!-- Create Gaggle Button -->
         <Button
             android:id="@+id/btnCreate"
             android:text="Create Gaggle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="16dp"
+            android:importantForAccessibility="yes"
+            android:contentDescription="Create the new Gaggle" />
     </LinearLayout>
 </ScrollView>

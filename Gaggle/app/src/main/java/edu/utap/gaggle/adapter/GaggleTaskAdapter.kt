@@ -32,7 +32,7 @@ class GaggleTaskAdapter(
 
         holder.taskTitle.text = task.title
         holder.taskCheckBox.setOnCheckedChangeListener(null)
-        holder.taskCheckBox.isChecked = task.date.toString() == LocalDate.now().toString()
+        holder.taskCheckBox.isChecked = task.completed
 
         holder.taskCheckBox.setOnCheckedChangeListener { _, isChecked ->
             onTaskChecked(task, isChecked)

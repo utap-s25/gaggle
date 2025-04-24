@@ -11,7 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import edu.utap.gaggle.R
 import edu.utap.gaggle.model.FeedItem
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class FeedAdapter : ListAdapter<FeedItem, FeedAdapter.FeedViewHolder>(DiffCallback()) {
 
@@ -22,17 +25,25 @@ class FeedAdapter : ListAdapter<FeedItem, FeedAdapter.FeedViewHolder>(DiffCallba
         fun bind(feedItem: FeedItem) {
             Log.d("FeedAdapter", "Binding feed item: $feedItem")
             val displayText = "${feedItem.userName} completed '${feedItem.taskTitle}' 💪"
+            Log.d("FeedAdapter", "Timestamp: ${feedItem.timestamp}")
             val subText = "In ${feedItem.gaggleTitle} • ${timeAgo(feedItem.timestamp)}"
 
             feedText.text = displayText
             feedSubText.text = subText
         }
 
+        private fun convertLongToDatetime(timestamp: Long?): LocalDateTime {
+            if (timestamp == null) return LocalDateTime.now()
+            val instant = Instant.ofEpochMilli(timestamp)
+            val dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+            return dateTime
+        }
+
         private fun timeAgo(timestamp: Long?): String {
+            if (timestamp == null) return "Unknown time"
             val now = LocalDateTime.now()
-            val dateTime = timestamp?.let {
-                LocalDateTime.ofEpochSecond(it / 1000, 0, java.time.ZoneOffset.UTC)
-            } ?: LocalDateTime.now()
+            val dateTime = convertLongToDatetime(timestamp)
+            Log.d("FeedAdapter", "DateTime: $dateTime vs timestamp: $timestamp")
             val duration = Duration.between(dateTime, now)
 
             return when {
@@ -55,7 +66,7 @@ class FeedAdapter : ListAdapter<FeedItem, FeedAdapter.FeedViewHolder>(DiffCallba
         val feedItem = getItem(position)
 
         // Only bind the feedItem if it meets the criteria
-        if (feedItem.timestamp != null && feedItem.completed != true) {
+        if (feedItem.timestamp != null && feedItem.completed == true) {
             holder.bind(feedItem)
         }
     }

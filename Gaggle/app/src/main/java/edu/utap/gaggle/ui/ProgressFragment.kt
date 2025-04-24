@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import android.content.Context
+import android.widget.Toast
 import java.time.format.DateTimeFormatter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -227,10 +228,11 @@ class ProgressFragment : Fragment() {
         val allCompleted = allTasks.isNotEmpty() && allTasks.all { it.completed }
         val isEmpty = allTasks.isEmpty()
 
+        // Show tasks always
         val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
         val message = view?.findViewById<TextView>(R.id.noTasksMessage)
 
-        recycler?.visibility = if (allCompleted || isEmpty) View.GONE else View.VISIBLE
+        recycler?.visibility = if (isEmpty) View.GONE else View.VISIBLE
         message?.visibility = if (isEmpty) View.VISIBLE else View.GONE
 
         if (allCompleted && !isEmpty) {
@@ -240,19 +242,35 @@ class ProgressFragment : Fragment() {
         Log.d("ProgressFragment", "All tasks completed for gaggle: $allCompleted")
     }
 
-    private fun resetTaskUI() {
-        val confettiContainer = view?.findViewById<ViewGroup>(R.id.confettiContainer)
-        confettiContainer?.visibility = View.GONE
 
+    private fun resetTaskUI() {
         val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
         recycler?.visibility = View.VISIBLE
     }
 
-    private fun showConfettiInline() {
-        val confettiContainer = view?.findViewById<ViewGroup>(R.id.confettiContainer)
-        confettiContainer?.visibility = View.VISIBLE
+    private fun hasShownToastToday(): Boolean {
+        val prefs = requireContext().getSharedPreferences("gaggle_prefs", Context.MODE_PRIVATE)
+        val today = LocalDate.now().toString()
+        val lastShownDate = prefs.getString("toast_shown_date", null)
+        return lastShownDate == today
+    }
+    private fun markToastShownToday() {
+        val prefs = requireContext().getSharedPreferences("gaggle_prefs", Context.MODE_PRIVATE)
+        val today = LocalDate.now().toString()
+        prefs.edit().putString("toast_shown_date", today).apply()
+    }
 
-        val streakText = confettiContainer?.findViewById<TextView>(R.id.streakText)
-        streakText?.text = "You completed all your tasks today! 🎉"
+
+    private fun showConfettiInline() {
+//        val confettiContainer = view?.findViewById<ViewGroup>(R.id.confettiContainer)
+//        confettiContainer?.visibility = View.VISIBLE
+
+//        val streakText = confettiContainer?.findViewById<TextView>(R.id.streakText)
+//        streakText?.text = "You completed all your tasks today! 🎉"
+
+        if (!hasShownToastToday()) {
+            Toast.makeText(requireContext(), "You completed all your tasks today! 🎉", Toast.LENGTH_SHORT).show()
+            markToastShownToday()
+        }
     }
 }

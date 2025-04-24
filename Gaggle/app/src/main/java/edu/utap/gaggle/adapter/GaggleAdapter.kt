@@ -1,4 +1,3 @@
-
 package edu.utap.gaggle.adapter
 
 import android.app.AlertDialog
@@ -15,7 +14,6 @@ class GaggleAdapter(private val viewModel: GaggleViewModel) :
     RecyclerView.Adapter<GaggleAdapter.GaggleViewHolder>() {
 
     private var gaggles: List<Gaggle> = listOf()
-    private var freshlyJoinedGaggles: Set<String> = emptySet()
 
     inner class GaggleViewHolder(private val binding: ItemGaggleBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -28,21 +26,19 @@ class GaggleAdapter(private val viewModel: GaggleViewModel) :
 
             binding.joinLeaveButton.setOnClickListener {
                 showJoinConfirmationDialog(userInGaggle, binding.root.context) {
-                    Log.d("TESTER", "canery")
                     val successFlag: Boolean
                     val newButtonText: String
                     if (userInGaggle) {
-                        Log.d("TESTER", "jai")
                         successFlag = viewModel.leaveGaggle(gaggle.id)
-                        newButtonText = "Leave"
-                    } else {
-                        Log.d("TESTER", "dew")
-                        successFlag = viewModel.joinGaggle(gaggle.id)
                         newButtonText = "Join"
+                    } else {
+                        successFlag = viewModel.joinGaggle(gaggle.id)
+                        newButtonText = "Leave"
                     }
-                    binding.joinLeaveButton.text = newButtonText
+                    if (successFlag) {
+                        binding.joinLeaveButton.text = newButtonText
+                    }
                 }
-                notifyDataSetChanged()
             }
         }
     }
@@ -65,19 +61,13 @@ class GaggleAdapter(private val viewModel: GaggleViewModel) :
     }
 
     private fun showJoinConfirmationDialog(leaveFlag: Boolean, context: Context, onConfirm: () -> Unit) {
-        val verb = if (leaveFlag) {"leave"} else {"join"}
-        val verbCamel = if (leaveFlag) {"Leave"} else {"Join"}
-        Log.d("TESTER", "winner: $verb $verbCamel")
+        val verb = if (leaveFlag) "leave" else "join"
+        val verbCamel = if (leaveFlag) "Leave" else "Join"
         AlertDialog.Builder(context)
             .setTitle("$verbCamel Gaggle")
             .setMessage("Are you sure you want to $verb this gaggle?")
             .setPositiveButton(verbCamel) { _, _ -> onConfirm() }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    fun updateJoinedGaggles(newSet: Set<String>) {
-        freshlyJoinedGaggles = newSet
-        notifyDataSetChanged()
     }
 }

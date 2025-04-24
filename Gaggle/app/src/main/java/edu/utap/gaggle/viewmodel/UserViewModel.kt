@@ -53,4 +53,3 @@ class UserViewModel : ViewModel() {
             }
     }
 }
-

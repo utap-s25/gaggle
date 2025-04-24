@@ -19,7 +19,6 @@ import edu.utap.gaggle.databinding.FragmentGaggleBinding
 import edu.utap.gaggle.model.Gaggle
 import edu.utap.gaggle.viewmodel.GaggleViewModel
 import edu.utap.gaggle.viewmodel.UserViewModel
-
 class GaggleFragment : Fragment() {
     private var _binding: FragmentGaggleBinding? = null
     private val binding get() = _binding!!
@@ -27,6 +26,11 @@ class GaggleFragment : Fragment() {
     private val gaggleViewModel: GaggleViewModel by activityViewModels()
     private lateinit var adapter: GaggleAdapter
     private val db = FirebaseFirestore.getInstance()
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadPreferences()  // Force refresh preferences
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,14 +42,6 @@ class GaggleFragment : Fragment() {
         binding.gaggleRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.gaggleRecyclerView.adapter = adapter
 
-//        gaggleViewModel.gaggles.observe(viewLifecycleOwner) { gaggleList ->
-//            adapter.updateGaggles(gaggleList)
-//        }
-
-        gaggleViewModel.userGaggles.observe(viewLifecycleOwner) { joined ->
-            adapter.updateJoinedGaggles(joined)
-        }
-
         binding.goToProfileButton.setOnClickListener {
             findNavController().navigate(R.id.profileFragment)
         }
@@ -55,6 +51,8 @@ class GaggleFragment : Fragment() {
             parentNavController?.navigate(R.id.action_gaggleFragment_to_createGaggleFragment)
         }
 
+        // Fetching preferences and loading gaggles
+        viewModel.loadPreferences()
         viewModel.preferences.observe(viewLifecycleOwner) { prefs ->
             Log.d("GAGGLEW", "Preferences observed: $prefs")
 
@@ -65,7 +63,7 @@ class GaggleFragment : Fragment() {
                 if (prefs.wantsSocial) "social" else null
             )
 
-            Log.d("GAGGLEW", "Selected: $selected")
+            Log.d("GAGGLEW", "Selected categories: $selected")
 
             if (selected.isEmpty()) {
                 showEmptyState()
@@ -90,7 +88,7 @@ class GaggleFragment : Fragment() {
             binding.emptyStateContainer.isVisible = false
             binding.gaggleRecyclerView.isVisible = true
             binding.fabCreateGaggle.isVisible = true
-            Log.d("GAGGLE", "hey we made it this far")
+            Log.d("GAGGLE", "Showing gaggles: $gaggles")
             adapter.updateGaggles(gaggles)
         }
     }

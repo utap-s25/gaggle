@@ -44,7 +44,6 @@ class GaggleViewModel : ViewModel() {
         startListeningToUserGaggles()
     }
 
-
     private fun updateFilteredList() {
         val joined = _userGaggles.value ?: emptySet()
         val all = _allMatchingGaggles.value ?: emptyList()

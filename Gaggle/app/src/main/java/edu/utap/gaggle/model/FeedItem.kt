@@ -3,9 +3,11 @@ package edu.utap.gaggle.model
 import java.time.LocalDate
 
 data class FeedItem(
-    val userName: String,
-    val gaggleTitle: String,
-    val taskTitle: String,
-    val date: LocalDate,
-    val timestamp: Long
-)
+    val userName: String? = null,
+    val gaggleTitle: String? = null,
+    val taskTitle: String? = null,
+    val date: String? = null,  // nullable and non-LocalDate to handle deserialization
+    val timestamp: Long? = null,
+    val completed: Boolean? = false // aka disable checkbox ; nullable to handle deserialization
+) {
+}

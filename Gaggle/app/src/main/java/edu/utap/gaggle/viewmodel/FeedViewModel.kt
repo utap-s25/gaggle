@@ -4,18 +4,27 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import edu.utap.gaggle.model.FeedItem
 import edu.utap.gaggle.model.Gaggle
+import edu.utap.gaggle.model.GaggleMemberGroup
+import edu.utap.gaggle.model.MemberIcon
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 
 class FeedViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val _feedItems = MutableLiveData<List<FeedItem>>()
     val feedItems: LiveData<List<FeedItem>> = _feedItems
+    private val _gaggleMemberGroups = MutableLiveData<List<GaggleMemberGroup>>()
+    val gaggleMemberGroups: LiveData<List<GaggleMemberGroup>> = _gaggleMemberGroups
+
 
     private val formattedDate = LocalDate.now().toString() // YYYY-MM-DD
 
@@ -43,6 +52,7 @@ class FeedViewModel : ViewModel() {
                 // Listen to tasks from users in the same gaggles
                 joinedGaggles.forEach { gaggleId ->
                     listenToGaggleTasks(userId, gaggleId)
+                    loadGaggleMembers(gaggleId)
                 }
             }
     }
@@ -116,6 +126,31 @@ class FeedViewModel : ViewModel() {
             }
     }
 
+    private fun loadGaggleMembers(gaggleId: String) {
+        val gaggleDocRef = db.collection("gaggles").document(gaggleId)
+        val groupList = mutableListOf<GaggleMemberGroup>()
+
+        gaggleDocRef.get().addOnSuccessListener { gaggleSnapshot ->
+            val members = gaggleSnapshot.get("members") as? List<String> ?: return@addOnSuccessListener
+            val gaggleTitle = gaggleSnapshot.getString("title") ?: "Unnamed Gaggle"
+
+            val memberIcons = mutableListOf<MemberIcon>()
+            members.forEach { memberId ->
+                db.collection("users").document(memberId).get()
+                    .addOnSuccessListener { userDoc ->
+                        val username = userDoc.getString("username") ?: "Unknown"
+                        val profileImageUrl = userDoc.getString("profileImageUrl")
+                        memberIcons.add(MemberIcon(memberId, username, profileImageUrl))
+
+                        if (memberIcons.size == members.size) {
+                            groupList.add(GaggleMemberGroup(gaggleTitle, memberIcons))
+                            _gaggleMemberGroups.value = groupList
+                        }
+                    }
+            }
+        }
+
+    }
 
     private fun listenToGaggleTasks(currentUserId: String, gaggleId: String) {
         val gaggleDocRef = db.collection("gaggles").document(gaggleId)
@@ -186,6 +221,90 @@ class FeedViewModel : ViewModel() {
             }
         }
     }
+
+    // Group feed items by gaggle and return a map of gaggle title to its member group
+    fun renderGaggleHeaders(): List<GaggleMemberGroup> {
+        val items = _feedItems.value ?: return emptyList()
+        val groups = _gaggleMemberGroups.value ?: return emptyList()
+
+        // Only return groups that actually have feed items
+        val gagglesWithItems = items.map { it.gaggleTitle }.toSet()
+        return groups.filter { it.gaggleTitle in gagglesWithItems }
+    }
+
+    fun loadFeed() {
+        val currentUserId = auth.currentUser?.uid ?: return
+
+        Log.d("FeedViewModel", "Loading feed for user: $currentUserId")
+        db.collection("users").document(currentUserId)
+            .get()
+            .addOnSuccessListener { userDoc ->
+                val joinedGaggles = userDoc.get("joinedGaggles") as? List<String> ?: emptyList()
+                val username = userDoc.getString("username") ?: "Someone"
+
+                if (joinedGaggles.isEmpty()) {
+                    _feedItems.value = emptyList()
+                    return@addOnSuccessListener
+                }
+
+                val newFeedItems = mutableListOf<FeedItem>()
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+                // Create a list of tasks to be fetched from Firestore
+                val gaggleFetchTasks = joinedGaggles.map { gaggleId ->
+                    Log.d("FeedViewModel", "Fetching tasks for gaggle: $gaggleId")
+                    db.collection("gaggles").document(gaggleId)
+                        .get()
+                        .continueWithTask { task ->
+                            if (!task.isSuccessful) {
+                                return@continueWithTask Tasks.forException(task.exception ?: Exception("Failed to load gaggle"))
+                            }
+
+                            val gaggleDoc = task.result
+                            val gaggleName = gaggleDoc?.getString("name") ?: "Unnamed Gaggle"
+                            val taskTitles = gaggleDoc?.get("tasks") as? List<String> ?: emptyList()
+
+                            val userTaskFetches = taskTitles.map { title ->
+                                val taskId = "${title}_$today"
+                                Log.d("FeedViewModel", "Fetching task: $taskId from user $currentUserId")
+                                db.collection("tasks")
+                                    .document(currentUserId)
+                                    .collection("userTasks")
+                                    .document(taskId)
+                                    .get()
+                                    .continueWith { userTaskDocTask ->
+                                        val userTaskDoc = userTaskDocTask.result
+                                        val isCompleted = userTaskDoc?.getBoolean("completed") ?: false
+                                        val timestamp = userTaskDoc?.getLong("timestamp") ?: System.currentTimeMillis()
+
+                                        FeedItem(
+                                            userName = username,
+                                            gaggleTitle = gaggleName,
+                                            taskTitle = title,
+                                            date = today,
+                                            timestamp = timestamp,
+                                            completed = isCompleted
+                                        )
+                                    }
+                            }
+
+                            Tasks.whenAllSuccess<FeedItem>(userTaskFetches).continueWith {
+                                it.result ?: emptyList()
+                            }
+                        }
+                }
+
+                // Using `Tasks.whenAllSuccess` to gather all gaggle results
+                Tasks.whenAllSuccess<List<FeedItem>>(gaggleFetchTasks)
+                    .addOnSuccessListener { feedItems ->
+                        _feedItems.value = feedItems.flatten().sortedByDescending { it.timestamp }
+                    }
+            }
+            .addOnFailureListener {
+                Log.e("FeedViewModel", "Failed to load feed", it)
+            }
+    }
+
 
 
 

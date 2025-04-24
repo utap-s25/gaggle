@@ -1,6 +1,7 @@
 package edu.utap.gaggle.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,14 +10,17 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import edu.utap.gaggle.R
 import edu.utap.gaggle.databinding.FragmentFeedBinding
 import edu.utap.gaggle.adapter.FeedAdapter
+import edu.utap.gaggle.adapter.GaggleMembersAdapter
 import edu.utap.gaggle.viewmodel.FeedViewModel
 
 class FeedFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
     private val binding get() = _binding!!
     private val feedViewModel: FeedViewModel by viewModels()
+    private lateinit var gaggleAdapter: GaggleMembersAdapter
     private lateinit var feedAdapter: FeedAdapter
 
     override fun onCreateView(
@@ -36,8 +40,26 @@ class FeedFragment : Fragment() {
         }
 
         feedViewModel.feedItems.observe(viewLifecycleOwner, Observer { feedItems ->
+            val headers = feedViewModel.renderGaggleHeaders()
+            headers.forEach {
+                Log.d("GaggleHeader", "Header: ${it.gaggleTitle} - Members: ${it.members.size}")
+            }
             feedAdapter.submitList(feedItems)
+
         })
+
+        val gaggleMembersRecycler = view.findViewById<RecyclerView>(R.id.gaggleMembersRecyclerView)
+        gaggleMembersRecycler.layoutManager = LinearLayoutManager(requireContext())
+
+        feedViewModel.gaggleMemberGroups.observe(viewLifecycleOwner) { gaggleGroups ->
+            gaggleAdapter = GaggleMembersAdapter(gaggleGroups)
+            gaggleMembersRecycler.adapter = gaggleAdapter
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        feedViewModel.loadFeed()  // Refreshes the feed when you return to this fragment
     }
 
     override fun onDestroyView() {

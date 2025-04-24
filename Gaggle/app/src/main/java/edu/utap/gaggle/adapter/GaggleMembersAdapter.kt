@@ -10,7 +10,7 @@ import edu.utap.gaggle.R
 import edu.utap.gaggle.model.GaggleMemberGroup
 
 class GaggleMembersAdapter(
-    private val gaggleGroups: List<GaggleMemberGroup>
+    private var gaggleGroups: List<GaggleMemberGroup>
 ) : RecyclerView.Adapter<GaggleMembersAdapter.GaggleViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GaggleViewHolder {
@@ -24,6 +24,12 @@ class GaggleMembersAdapter(
     }
 
     override fun getItemCount(): Int = gaggleGroups.size
+
+    fun updateData(newData: List<GaggleMemberGroup>) {
+        this.gaggleGroups = newData
+        notifyDataSetChanged() // or use DiffUtil for efficiency
+    }
+
 
     inner class GaggleViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val title: TextView = view.findViewById(R.id.gaggleTitle)

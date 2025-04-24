@@ -7,29 +7,17 @@
     android:padding="12dp"
     android:background="@android:color/white">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/gaggleMembersRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:nestedScrollingEnabled="false"
-        android:padding="8dp"/>
-
-    <!-- Optional user card container -->
     <FrameLayout
         android:id="@+id/userCardContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp" />
 
-    <!-- Feed list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/feedRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="60dp"
+        android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="8dp"
+        android:paddingBottom="60dp"
         android:scrollbars="vertical" />
 </LinearLayout>

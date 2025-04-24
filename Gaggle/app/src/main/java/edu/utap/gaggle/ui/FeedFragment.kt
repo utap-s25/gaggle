@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import edu.utap.gaggle.R
@@ -22,6 +23,7 @@ class FeedFragment : Fragment() {
     private val feedViewModel: FeedViewModel by viewModels()
     private lateinit var gaggleAdapter: GaggleMembersAdapter
     private lateinit var feedAdapter: FeedAdapter
+    private lateinit var concatAdapter: ConcatAdapter // so we can move both feeds in one
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,10 +35,13 @@ class FeedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        gaggleAdapter = GaggleMembersAdapter(emptyList())
         feedAdapter = FeedAdapter()
+
+        concatAdapter = ConcatAdapter(gaggleAdapter, feedAdapter)
         binding.feedRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
-            adapter = feedAdapter
+            adapter = concatAdapter
         }
 
         feedViewModel.feedItems.observe(viewLifecycleOwner, Observer { feedItems ->
@@ -48,18 +53,18 @@ class FeedFragment : Fragment() {
 
         })
 
-        val gaggleMembersRecycler = view.findViewById<RecyclerView>(R.id.gaggleMembersRecyclerView)
+        val gaggleMembersRecycler = view.findViewById<RecyclerView>(R.id.feedRecyclerView)
         gaggleMembersRecycler.layoutManager = LinearLayoutManager(requireContext())
 
         feedViewModel.gaggleMemberGroups.observe(viewLifecycleOwner) { gaggleGroups ->
-            gaggleAdapter = GaggleMembersAdapter(gaggleGroups)
-            gaggleMembersRecycler.adapter = gaggleAdapter
+            Log.d("FeedFragment", "Received gaggle groups: $gaggleGroups")
+            gaggleAdapter.updateData(gaggleGroups)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        feedViewModel.loadFeed()  // Refreshes the feed when you return to this fragment
+        feedViewModel.refreshFeed()
     }
 
     override fun onDestroyView() {

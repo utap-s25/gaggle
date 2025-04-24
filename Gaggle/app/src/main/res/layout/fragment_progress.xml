@@ -1,32 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:layout_width="match_parent"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:background="@android:color/white">
 
-    <LinearLayout
-        android:id="@+id/taskContainer"
-        android:orientation="vertical"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="80dp"/>
+        android:layout_height="match_parent"
+        android:padding="16dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/progressRecyclerView"
+        <LinearLayout
+            android:id="@+id/taskContainer"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_height="wrap_content" >
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="30dp" />
 
-        <TextView
-            android:id="@+id/noTasksMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="No tasks for today!"
-            android:gravity="center"
-            android:visibility="gone"/>
-    </LinearLayout>
+            <TextView
+                android:id="@+id/progressTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Today's Progress"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:paddingBottom="12dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/progressRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"/>
+
+            <LinearLayout
+                android:id="@+id/noTasksContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/noTasksMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No tasks for today!"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="18sp"
+                    android:paddingTop="12dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
         android:id="@+id/confettiContainer"
@@ -34,15 +61,16 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#CCFFFFFF"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/streakText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="You completed all your tasks!"
-            android:textSize="20sp"
+            android:text="🎉 You completed all your tasks!"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:padding="24dp"/>
     </LinearLayout>
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

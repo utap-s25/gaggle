@@ -45,49 +45,73 @@ class FeedViewModel : ViewModel() {
 
         db.collection("users").document(userId).get()
             .addOnSuccessListener { userDoc ->
-                val joinedGaggles = userDoc.get("joinedGaggles") as? List<String> ?: return@addOnSuccessListener
+                val joinedGaggles = userDoc.get("joinedGaggles") as? List<String> ?: emptyList()
                 Log.d("FeedViewModel", "Joined gaggles: $joinedGaggles")
 
-                listenToUserTasks(userId)
+                if (joinedGaggles.isEmpty()) {
+                    _feedItems.value = emptyList()
+                    _gaggleMemberGroups.value = emptyList()
+                    return@addOnSuccessListener
+                }
+
+                val allMemberIds = mutableSetOf<String>()
+                val tasksToLoad = mutableListOf<() -> Unit>()
+
+                joinedGaggles.forEach { gaggleId ->
+                    tasksToLoad.add {
+                        db.collection("gaggles").document(gaggleId).get()
+                            .addOnSuccessListener { gaggleDoc ->
+                                val members = gaggleDoc.get("members") as? List<String> ?: emptyList()
+                                allMemberIds.addAll(members)
+
+                                allMemberIds.add(userId)
+
+                                Log.d("FeedViewModel", "All member IDs: $allMemberIds")
+
+                                if (allMemberIds.isNotEmpty()) {
+                                    listenToAllMemberTasks(allMemberIds.toList())
+                                }
+                            }
+                    }
+                }
+                tasksToLoad.forEach { it() }
 
                 joinedGaggles.forEach { gaggleId ->
                     loadGaggleMembers(gaggleId)
                 }
-
                 loadFeed()
             }
     }
 
-    private fun listenToUserTasks(userId: String) {
-        val userTasksRef = db.collection("tasks").document(userId).collection("userTasks")
+    private fun listenToAllMemberTasks(memberIds: List<String>) {
+        val feedItemsMap = mutableMapOf<String, FeedItem>() // Shared map: key = taskTitle+userId+gaggleTitle
 
-        val listener = userTasksRef
-            .whereEqualTo("date", today)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+        memberIds.forEach { memberId ->
+            val userTasksRef = db.collection("tasks").document(memberId).collection("userTasks")
 
-                val updatedItems = _feedItems.value?.toMutableList() ?: mutableListOf()
+            val listener = userTasksRef
+                .whereEqualTo("date", today)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null || snapshot == null) return@addSnapshotListener
 
-                snapshot.documentChanges.forEach { change ->
-                    val doc = change.document
-                    val taskTitle = doc.getString("title") ?: return@forEach
-                    val gaggleTitle = doc.getString("gaggleTitle") ?: "Unnamed Gaggle"
-                    val taskUserId = doc.getString("userId") ?: return@forEach
-                    val timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
-                    val taskId = "$taskTitle|$taskUserId|$gaggleTitle"
+                    snapshot.documentChanges.forEach { change ->
+                        val doc = change.document
+                        val taskTitle = doc.getString("title") ?: return@forEach
+                        val gaggleTitle = doc.getString("gaggleTitle") ?: "Unnamed Gaggle"
+                        val taskUserId = doc.getString("userId") ?: return@forEach
+                        val timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                        val key = "$taskTitle|$taskUserId|$gaggleTitle" // Unique key for this feed item
 
-                    val userRef = db.collection("users").document(taskUserId)
+                        val userRef = db.collection("users").document(taskUserId)
 
-                    when (change.type) {
-                        DocumentChange.Type.ADDED,
-                        DocumentChange.Type.MODIFIED -> {
-                            val isCompleted = doc.getBoolean("completed") ?: false
-                            if (!isCompleted) {
-                                userRef.get().addOnSuccessListener { userDoc ->
-                                    val username = userDoc.getString("username") ?: "Unknown"
-                                    updatedItems.removeAll { it.taskTitle == taskTitle && it.userName == username && it.gaggleTitle == gaggleTitle }
-                                    updatedItems.add(
-                                        FeedItem(
+                        when (change.type) {
+                            DocumentChange.Type.ADDED,
+                            DocumentChange.Type.MODIFIED -> {
+                                val isCompleted = doc.getBoolean("completed") ?: false
+                                if (isCompleted) {
+                                    userRef.get().addOnSuccessListener { userDoc ->
+                                        val username = userDoc.getString("username") ?: "Unknown"
+                                        feedItemsMap[key] = FeedItem(
                                             userName = username,
                                             gaggleTitle = gaggleTitle,
                                             taskTitle = taskTitle,
@@ -95,29 +119,28 @@ class FeedViewModel : ViewModel() {
                                             timestamp = timestamp,
                                             completed = true
                                         )
-                                    )
-                                    _feedItems.postValue(updatedItems.sortedByDescending { it.timestamp })
+                                        _feedItems.postValue(feedItemsMap.values.sortedByDescending { it.timestamp })
+                                    }
                                 }
                             }
-                        }
-
-                        DocumentChange.Type.REMOVED -> {
-                            userRef.get().addOnSuccessListener { userDoc ->
-                                val username = userDoc.getString("username") ?: "Unknown"
-                                updatedItems.removeIf {
-                                    it.taskTitle == taskTitle &&
-                                            it.userName == username &&
-                                            it.gaggleTitle == gaggleTitle
+                            DocumentChange.Type.REMOVED -> {
+                                userRef.get().addOnSuccessListener { userDoc ->
+                                    val username = userDoc.getString("username") ?: "Unknown"
+                                    val removalKey = "$taskTitle|$taskUserId|$gaggleTitle"
+                                    feedItemsMap.remove(removalKey)
+                                    _feedItems.postValue(feedItemsMap.values.sortedByDescending { it.timestamp })
                                 }
-                                _feedItems.postValue(updatedItems.sortedByDescending { it.timestamp })
                             }
                         }
                     }
                 }
-            }
 
-        listeners.add(listener)
+            listeners.add(listener)
+        }
     }
+
+
+
     private fun loadGaggleMembers(gaggleId: String) {
         val gaggleDocRef = db.collection("gaggles").document(gaggleId)
 

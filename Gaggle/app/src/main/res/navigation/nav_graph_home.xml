@@ -12,7 +12,12 @@
     <fragment
         android:id="@+id/feedFragment"
         android:name="edu.utap.gaggle.ui.FeedFragment"
-        android:label="Feed" />
+        android:label="Feed" >
+
+    <action
+        android:id="@+id/action_feedFragment_to_gaggleFragment"
+        app:destination="@id/gaggleFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/gaggleFragment"

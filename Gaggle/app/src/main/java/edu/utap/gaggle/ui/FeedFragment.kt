@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +32,7 @@ class FeedFragment : Fragment() {
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
         return binding.root
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -56,13 +58,23 @@ class FeedFragment : Fragment() {
             feedAdapter.submitList(filteredFeedItems)
         })
 
-        val gaggleMembersRecycler = view.findViewById<RecyclerView>(R.id.feedRecyclerView)
-        gaggleMembersRecycler.layoutManager = LinearLayoutManager(requireContext())
-
         feedViewModel.gaggleMemberGroups.observe(viewLifecycleOwner) { gaggleGroups ->
-            Log.d("FeedFragment", "Received gaggle groups: $gaggleGroups")
+            if (gaggleGroups.isEmpty()) {
+                // Show the "No gaggles? Join one!" prompt if no gaggles
+                binding.noGagglesPrompt.visibility = View.VISIBLE
+            } else {
+                // Hide the prompt if gaggles exist
+                binding.noGagglesPrompt.visibility = View.GONE
+            }
+
             gaggleAdapter.updateData(gaggleGroups)
         }
+    }
+
+    // Navigate to GaggleFragment when the user clicks the prompt
+    fun onJoinGaggleClick(view: View) {
+        val navController = findNavController()
+        navController.navigate(R.id.gaggleFragment)
     }
 
     override fun onResume() {

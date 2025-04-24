@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import android.content.Context
+import android.widget.LinearLayout
 import android.widget.Toast
 import java.time.format.DateTimeFormatter
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,7 +38,7 @@ class ProgressFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        checkIfNewDayAndReset()  // Added call to check if new day and reset UI
+        checkIfNewDayAndReset()
         return inflater.inflate(R.layout.fragment_progress, container, false)
     }
 
@@ -62,10 +63,21 @@ class ProgressFragment : Fragment() {
         recyclerView.adapter = adapter
 
         viewModel.userGaggles.observe(viewLifecycleOwner, Observer { gaggles ->
+            Log.d("ProgressFragment", "User Gaggles: $gaggles")
             groupedTasks.clear()
+
+            if (gaggles.isNullOrEmpty()) {
+                Log.d("ProgressFragment", "gaggles.isNullOrEmpty()")
+                // No gaggles joined
+                updateUIState()
+                return@Observer
+            }
+
+            // Load tasks for each gaggle
             gaggles.forEach { gaggleId ->
                 loadTasksForGaggle(gaggleId)
             }
+            updateUIState()  // Ensure UI is updated after checking gaggles
         })
     }
 
@@ -76,10 +88,8 @@ class ProgressFragment : Fragment() {
         val formatter = DateTimeFormatter.ISO_DATE
 
         if (lastDateString == null || LocalDate.parse(lastDateString, formatter) != today) {
-            // It's a new day! Reset the UI
             resetTaskUI()
 
-            // Save today's date
             prefs.edit().putString("last_opened_date", today.format(formatter)).apply()
         }
     }
@@ -214,22 +224,28 @@ class ProgressFragment : Fragment() {
 
     private fun updateUIState() {
         val allTasks = groupedTasks.values.flatten()
-
         val allCompleted = allTasks.isNotEmpty() && allTasks.all { it.completed }
+        Log.d("ProgressFragment", "All Tasks: $allTasks")
         val isEmpty = allTasks.isEmpty()
+        Log.d("ProgressFragment", "isEmpty: $isEmpty")
 
         val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
+        val container = view?.findViewById<LinearLayout>(R.id.noTasksContainer)
         val message = view?.findViewById<TextView>(R.id.noTasksMessage)
 
+        if (viewModel.userGaggles.value.isNullOrEmpty()) {
+            message?.text = "You haven't joined any Gaggles yet!"  // User hasn't joined any gaggles
+        } else {
+            message?.text = "No tasks found for today."  // There are gaggles, but no tasks for the day
+        }
+
         recycler?.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        container?.visibility = if (isEmpty) View.VISIBLE else View.GONE
         message?.visibility = if (isEmpty) View.VISIBLE else View.GONE
 
         if (allCompleted && !isEmpty) {
             showConfettiInline()
         }
-
-        recycler?.visibility = if (groupedTasks.values.flatten().isEmpty()) View.GONE else View.VISIBLE
-        message?.visibility = if (groupedTasks.values.flatten().isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun resetTaskUI() {

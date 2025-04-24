@@ -45,12 +45,15 @@ class FeedFragment : Fragment() {
         }
 
         feedViewModel.feedItems.observe(viewLifecycleOwner, Observer { feedItems ->
-            val headers = feedViewModel.renderGaggleHeaders()
-            headers.forEach {
-                Log.d("GaggleHeader", "Header: ${it.gaggleTitle} - Members: ${it.members.size}")
-            }
-            feedAdapter.submitList(feedItems)
+            val filteredFeedItems = feedItems.filter { it.completed == true }
 
+            if (filteredFeedItems.isEmpty()) {
+                binding.emptyFeedPlaceholder.visibility = View.VISIBLE
+            } else {
+                binding.emptyFeedPlaceholder.visibility = View.GONE
+            }
+
+            feedAdapter.submitList(filteredFeedItems)
         })
 
         val gaggleMembersRecycler = view.findViewById<RecyclerView>(R.id.feedRecyclerView)

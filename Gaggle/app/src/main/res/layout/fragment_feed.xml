@@ -1,23 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/feedRoot"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:background="@android:color/white">
+    android:fillViewport="true">
 
-    <FrameLayout
-        android:id="@+id/userCardContainer"
+    <LinearLayout
+        android:id="@+id/feedRootLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp" />
+        android:orientation="vertical"
+        android:padding="8dp">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/feedRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="60dp"
-        android:scrollbars="vertical" />
-</LinearLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/feedRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <TextView
+            android:id="@+id/emptyFeedPlaceholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Quiet day so far ..."
+            android:gravity="center"
+            android:padding="16dp"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:textColor="@android:color/darker_gray" />
+    </LinearLayout>
+</ScrollView>

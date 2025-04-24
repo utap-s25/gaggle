@@ -48,7 +48,13 @@ class ProgressFragment : Fragment() {
         adapter = GroupedGaggleTaskAdapter(groupedTasks) { task, isChecked ->
             task.completed = isChecked
             task.timestamp = if (isChecked) System.currentTimeMillis() else 0
-            markTaskComplete(task)
+            if (isChecked) {
+                Log.d("ProgressFragment", "Marking task as complete: $task")
+                markTaskComplete(task)
+            } else {
+                Log.d("ProgressFragment", "Marking task as incomplete: $task")
+                markTaskComplete(task)
+            }
             updateUIState()
         }
 
@@ -212,7 +218,6 @@ class ProgressFragment : Fragment() {
         val allCompleted = allTasks.isNotEmpty() && allTasks.all { it.completed }
         val isEmpty = allTasks.isEmpty()
 
-        // Show tasks always
         val recycler = view?.findViewById<RecyclerView>(R.id.progressRecyclerView)
         val message = view?.findViewById<TextView>(R.id.noTasksMessage)
 
@@ -223,6 +228,8 @@ class ProgressFragment : Fragment() {
             showConfettiInline()
         }
 
+        recycler?.visibility = if (groupedTasks.values.flatten().isEmpty()) View.GONE else View.VISIBLE
+        message?.visibility = if (groupedTasks.values.flatten().isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun resetTaskUI() {

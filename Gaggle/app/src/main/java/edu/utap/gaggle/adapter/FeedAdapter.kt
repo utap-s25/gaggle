@@ -65,7 +65,6 @@ class FeedAdapter : ListAdapter<FeedItem, FeedAdapter.FeedViewHolder>(DiffCallba
     override fun onBindViewHolder(holder: FeedViewHolder, position: Int) {
         val feedItem = getItem(position)
 
-        // Only bind the feedItem if it meets the criteria
         if (feedItem.timestamp != null && feedItem.completed == true) {
             holder.bind(feedItem)
         }

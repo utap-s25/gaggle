@@ -113,7 +113,7 @@ class GaggleViewModel : ViewModel() {
 
     fun createGaggle(title: String, desc: String, prefs: List<String>, tasks: List<String>) {
         val userId = auth.currentUser?.uid ?: return
-        val gaggleRef = db.collection("gaggles").document()  // generate a doc ref
+        val gaggleRef = db.collection("gaggles").document()
 
         val gaggle = Gaggle(
             id = gaggleRef.id,

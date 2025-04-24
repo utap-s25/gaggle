@@ -30,15 +30,12 @@ class FeedViewModel : ViewModel() {
     }
 
     fun refreshFeed() {
-        // Clear previous listeners
         listeners.forEach { it.remove() }
         listeners.clear()
 
-        // Reset lists
         _feedItems.value = emptyList()
         _gaggleMemberGroups.value = emptyList()
 
-        // Re-listen
         listenToFeed()
     }
 
@@ -141,7 +138,6 @@ class FeedViewModel : ViewModel() {
 
                         fetchedCount++
                         if (fetchedCount == members.size) {
-                            // Merge or replace existing gaggle group
                             val updatedGroups = _gaggleMemberGroups.value?.toMutableList() ?: mutableListOf()
                             val existingIndex = updatedGroups.indexOfFirst { it.gaggleTitle == gaggleTitle }
                             if (existingIndex != -1) {

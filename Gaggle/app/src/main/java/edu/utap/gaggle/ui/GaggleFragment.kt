@@ -29,7 +29,7 @@ class GaggleFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.loadPreferences()  // Force refresh preferences
+        viewModel.loadPreferences()
     }
 
     override fun onCreateView(
@@ -51,7 +51,6 @@ class GaggleFragment : Fragment() {
             parentNavController?.navigate(R.id.action_gaggleFragment_to_createGaggleFragment)
         }
 
-        // Fetching preferences and loading gaggles
         viewModel.loadPreferences()
         viewModel.preferences.observe(viewLifecycleOwner) { prefs ->
             Log.d("GAGGLEW", "Preferences observed: $prefs")

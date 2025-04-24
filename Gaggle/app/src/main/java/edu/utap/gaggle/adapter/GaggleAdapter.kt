@@ -21,14 +21,16 @@ class GaggleAdapter(private val viewModel: GaggleViewModel) :
             binding.gaggleTitle.text = gaggle.title
             binding.gaggleDescription.text = gaggle.description
 
-            val userInGaggle = viewModel.userGaggles.value?.contains(gaggle.id) == true
-            binding.joinLeaveButton.text = if (userInGaggle) "Leave" else "Join"
+            val isInitiallyInGaggle = viewModel.userGaggles.value?.contains(gaggle.id) == true
+            binding.joinLeaveButton.text = if (isInitiallyInGaggle) "Leave" else "Join"
 
             binding.joinLeaveButton.setOnClickListener {
-                showJoinConfirmationDialog(userInGaggle, binding.root.context) {
+                val currentlyInGaggle = viewModel.userGaggles.value?.contains(gaggle.id) == true
+
+                showJoinConfirmationDialog(currentlyInGaggle, binding.root.context) {
                     val successFlag: Boolean
                     val newButtonText: String
-                    if (userInGaggle) {
+                    if (currentlyInGaggle) {
                         successFlag = viewModel.leaveGaggle(gaggle.id)
                         newButtonText = "Join"
                     } else {

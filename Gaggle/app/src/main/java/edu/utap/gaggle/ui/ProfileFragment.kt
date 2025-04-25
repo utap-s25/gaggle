@@ -44,8 +44,9 @@ class ProfileFragment : Fragment() {
 
 
         binding.saveButton.setOnClickListener {
+            val name = if (binding.editUsername.text.isBlank()) FirebaseAuth.getInstance().currentUser?.email ?: "" else binding.editUsername.text.toString()
             val prefs = UserPreferences(
-                username = binding.editUsername.text.toString(),
+                username = name,
                 wantsPhysical = binding.checkboxPhysical.isChecked,
                 wantsMental = binding.checkboxMental.isChecked,
                 wantsCreative = binding.checkboxCreative.isChecked,
